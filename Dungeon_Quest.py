@@ -45,10 +45,16 @@ def track_item(category, name):
 
 
 
+enemy_names = ["Goblin", "Orc", "Troll", "Dragon", "Vampire"]
 
+def add_enemy_to_game(enemy_name):
+    if enemy_name not in enemy_names:
+        enemy_names.append(enemy_name)
+        print(f"Enemy '{enemy_name}' added to the game.")
+    else:
+        print(f"Enemy '{enemy_name}' already exists in the game.")
 
 def generate_enemies():
-    enemy_names = ["Goblin", "Orc", "Troll", "Dragon", "Vampire"]
     enemies = []
     
     for _ in range(3):
@@ -59,7 +65,12 @@ def generate_enemies():
     
     return enemies
 
-def display_enemies(enemies):
+def display_enemy_names():
+    print("\n--- Enemy Names ---")
+    for name in enemy_names:
+        print(name)
+
+def display_generated_enemies(enemies):
     print("\n--- Enemies ---")
     for enemy in enemies:
         print(f"{enemy['name']} - Strength: {enemy['strength']}, Health: {enemy['health']}")
@@ -99,9 +110,18 @@ def use_potion():
 
 
 def battle(enemy, weapon):
-    global player_health, defeated_count, total_damage_dealt
-    print(f"\n\nBattle starts with {enemy['name']}!")
-    for round_num in range(1, 4):
+    global player_health, defeated_count, total_damage_dealt, unique_enemies
+    print(f"\nBattle starts with {enemy['name']}!")
+    unique_enemies.add(enemy['name'])
+
+    round = input("Enter number of rounds : ")
+    if not round.isdigit() or int(round) < 1 or int(round) > 4:
+        print("Invalid number of rounds! Defaulting to 4 rounds.")
+        round = 4
+    else:
+        round = int(round)
+
+    for round_num in range(1, round + 1):
         if player_health <= 0:
             print("You were defeated!")
             return
@@ -115,14 +135,13 @@ def battle(enemy, weapon):
         if enemy['health'] <= 0:
             print(f"{enemy['name']} defeated!")
             defeated_count += 1
-            unique_enemies.add(enemy['name'])
             return
 
         enemy_attack = random.randint(1, enemy['strength'])
         player_health -= enemy_attack
         print(f"{enemy['name']} attacked you for {enemy_attack} damage. \nYour health: {player_health}")
 
-        if round_num < 3 and player_health > 0:
+        if round_num < round+1 and player_health > 0:
             use = input("Use potion? (y/n): ").strip().lower()
             if use == 'y':
                 use_potion()
@@ -135,30 +154,76 @@ def  Post_Battle():
     if weapon_usage:
         most_used = weapon_usage.most_common(1)[0][0]
         print(f"Most used weapon: {most_used}")
-    for enemy in unique_enemies:
-        print(f"Unique enemy faced: {enemy}")
+    if unique_enemies:
+        print(f"Unique enemy faced: {unique_enemies}")
     
 
 
 def main():
-    print("Welcome to Dungeon Quest!")
+    print("------Welcome to Dungeon Quest!-------")
 
     add_item_to_inventory('weapons', 'Sword', 10, 1)
     add_item_to_inventory('weapons', 'Axe', 12, 1)
     add_item_to_inventory('armor', 'Shield', 5, 1)
     add_item_to_inventory('potions', 'Healing Potion', 20, 3)
+    #display_inventory()
 
-    display_inventory()
-    enemies = generate_enemies()
-    display_enemies(enemies)
+    while True:
+        print("\nSelect following options:")
+        print("1. you want to add items to inventory?")
+        print("2  want to view inventory")
+        print("3. you want to add enemies to the game?")
+        print("4. you want to view enemies?")
+        print("5. you want to start the game?")
+        print("6. Exit")
+        choice = int(input("Enter choice (1-6): "))
 
-    for enemy in enemies:
-        if player_health <= 0:
-            break
-        weapon = choose_weapon()
-        battle(enemy, weapon)
+        match choice:
+            case 1:
+                print("\nchoose following category to add items to inventory:")
+                print("1. Weapons")
+                print("2. Armor")       
+                print("3. Potions")
+                choice = int(input("Enter choice (1-3): "))
+                inventory_category = 'weapons' if choice == 1 else 'armor' if choice == 2 else 'potions'
+                item_name = input(f"Enter {inventory_category} name: ")
+                item_value = int(input(f"Enter {inventory_category} value: "))
+                item_quantity = int(input(f"Enter {inventory_category} quantity: "))
+                add_item_to_inventory(inventory_category, item_name, item_value, item_quantity)
+                print("Inventory updated!")
 
-    Post_Battle()
+            case 2:
+                print("\nDisplaying inventory:")
+                display_inventory()
+
+            case 3:
+                print("\nAdd enemies to the game:")
+                enemy_name = input("Enter enemy name: ")
+                add_enemy_to_game(enemy_name)
+
+            case 4:
+                print("\nDisplaying enemies:")
+                display_enemy_names()
+
+            case 5:
+                print("\nStarting the game...")
+                enemies = generate_enemies()
+                display_generated_enemies(enemies)
+                for enemy in enemies:
+                    if player_health <= 0:
+                        break
+                    weapon = choose_weapon()
+                    battle(enemy, weapon)
+                Post_Battle()
+
+            case 6:
+                print("Exiting the game. Goodbye!")
+                return
+
+            case _:
+                print("Invalid choice!")
+
+    
 
 if __name__ == "__main__":
     main()
